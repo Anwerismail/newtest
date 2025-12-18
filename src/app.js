@@ -5,7 +5,9 @@ import morgan from 'morgan';
 import { config } from './config/env.js';
 import { connectDB } from './config/database.js';
 import { HTTP_STATUS } from './utils/constants.js';
-import router from './routes/auth.routes.js';
+// Import Routes
+import authRoutes from './routes/auth.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 
 // Initialize Express
 const app = express();
@@ -36,14 +38,14 @@ app.get('/health', (req, res) => {
     });
 });
 
-// API Routes (à ajouter progressivement)
+// API Routes
 app.get('/api/v1', (req, res) => {
     res.json({
         message: 'SiteForge API v1',
         version: '1.0.0',
         endpoints: {
             auth: '/api/v1/auth',
-            users: '/api/v1/users',
+            admin: '/api/v1/admin',
             projects: '/api/v1/projects',
             tickets: '/api/v1/tickets',
             templates: '/api/v1/templates'
@@ -51,7 +53,10 @@ app.get('/api/v1', (req, res) => {
     });
 });
 
-app.use('/api/v1/auth', router);
+// Mount Routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/admin', adminRoutes);
+
 // 404 Handler
 app.use((req, res) => {
     res.status(HTTP_STATUS.NOT_FOUND).json({
