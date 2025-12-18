@@ -5,9 +5,6 @@ import morgan from 'morgan';
 import { config } from './config/env.js';
 import { connectDB } from './config/database.js';
 import { HTTP_STATUS } from './utils/constants.js';
-// Import Routes
-import authRoutes from './routes/auth.routes.js';
-import adminRoutes from './routes/admin.routes.js';
 
 // Initialize Express
 const app = express();
@@ -38,6 +35,11 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Import Routes
+import authRoutes from './routes/auth.routes.js';
+import adminRoutes from './routes/admin.routes.js';
+import templatesRoutes from './routes/templates.routes.js';
+
 // API Routes
 app.get('/api/v1', (req, res) => {
     res.json({
@@ -46,9 +48,9 @@ app.get('/api/v1', (req, res) => {
         endpoints: {
             auth: '/api/v1/auth',
             admin: '/api/v1/admin',
+            templates: '/api/v1/templates',
             projects: '/api/v1/projects',
-            tickets: '/api/v1/tickets',
-            templates: '/api/v1/templates'
+            tickets: '/api/v1/tickets'
         }
     });
 });
@@ -56,6 +58,7 @@ app.get('/api/v1', (req, res) => {
 // Mount Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/templates', templatesRoutes);
 
 // 404 Handler
 app.use((req, res) => {
@@ -85,11 +88,11 @@ app.listen(PORT, () => {
     console.log(`
 ╔═══════════════════════════════════════════╗
 ║                                           ║
-║       🚀 SITEFORGE API STARTED             ║
+║       🚀 SITEFORGE API STARTED           ║
 ║                                           ║
-║  Environment: ${config.NODE_ENV.padEnd(27)} ║
-║  Port: ${PORT.toString().padEnd(33)}  ║
-║  URL: ${config.API_URL.padEnd(34)}  ║
+║  Environment: ${config.NODE_ENV.padEnd(27)}║
+║  Port: ${PORT.toString().padEnd(33)}║
+║  URL: ${config.API_URL.padEnd(34)}║
 ║                                           ║
 ╚═══════════════════════════════════════════╝
   `);

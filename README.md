@@ -42,10 +42,10 @@ npm run seed
 ```
 
 Ceci va créer :
-- ✅ Super Admin : `admin@Evolyte.com` / `Admin@123`
-- ✅ Manager : `manager@Evolyte.com` / `Manager@123`
-- ✅ Worker : `worker@Evolyte.com` / `Worker@123`
-- ✅ Client : `client@Evolyte.com` / `Client@123`
+- ✅ Super Admin : `admin@evolyte.com` / `Admin@123`
+- ✅ Manager : `manager@evolyte.com` / `Manager@123`
+- ✅ Worker : `worker@evolyte.com` / `Worker@123`
+- ✅ Client : `client@evolyte.com` / `Client@123`
 
 **⚠️ IMPORTANT : Changez ces mots de passe en production !**
 
@@ -96,7 +96,7 @@ curl -X POST http://localhost:5000/api/v1/auth/register \
 curl -X POST http://localhost:5000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@Evolyte.com",
+    "email": "admin@evolyte.com",
     "password": "Admin@123"
   }'
 ```
