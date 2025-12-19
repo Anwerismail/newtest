@@ -5,7 +5,7 @@ dotenv.config();
 export const config = {
     // Server
     NODE_ENV: process.env.NODE_ENV || 'development',
-    PORT: process.env.PORT || 5000,
+    PORT: process.env.PORT || 3000,
     API_URL: process.env.API_URL || 'http://localhost:5000',
     FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
 
@@ -29,8 +29,15 @@ export const config = {
     },
 
     // Email
-    RESEND_API_KEY: process.env.RESEND_API_KEY,
-    EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@siteforge.com',
+    EMAIL: {
+        HOST: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        PORT: parseInt(process.env.EMAIL_PORT) || 587,
+        SECURE: process.env.EMAIL_SECURE === 'true',
+        USER: process.env.EMAIL_USER,
+        PASSWORD: process.env.EMAIL_PASSWORD,
+        FROM_NAME: process.env.EMAIL_FROM_NAME || 'Evolyte',
+        FROM_EMAIL: process.env.EMAIL_FROM_EMAIL || 'noreply@evolyte.com'
+    },
 
     // Stripe
     STRIPE: {
@@ -40,8 +47,13 @@ export const config = {
 
     // Vercel
     VERCEL: {
-        TOKEN: process.env.VERCEL_TOKEN,
+        API_TOKEN: process.env.VERCEL_API_TOKEN,
         TEAM_ID: process.env.VERCEL_TEAM_ID
+    },
+
+    // Netlify
+    NETLIFY: {
+        API_TOKEN: process.env.NETLIFY_API_TOKEN
     },
 
     // Rate Limiting
@@ -71,3 +83,6 @@ requiredEnvVars.forEach(varName => {
 });
 
 console.log('✅ Environment variables loaded successfully');
+
+export const ENV = config;
+export default config;

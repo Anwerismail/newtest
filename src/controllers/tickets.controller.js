@@ -1,6 +1,8 @@
 import Ticket from '../models/Ticket.model.js';
 import User from '../models/User.model.js';
 import { HTTP_STATUS, ERROR_MESSAGES, ROLES } from '../utils/constants.js';
+import { logInfo, logError, logBusiness } from '../services/logger.service.js';
+import { sendTicketAssignedEmail } from '../services/email.service.js';
 
 /**
  * @desc    Récupérer tous les tickets (selon rôle)
@@ -264,6 +266,14 @@ export const createTicket = async (req, res) => {
         // Populate pour retourner les infos complètes
         await ticket.populate('reporter', 'profile email');
 
+        logBusiness('Ticket created', {
+            ticketId: ticket._id,
+            ticketNumber: ticket.ticketNumber,
+            type: ticket.type,
+            priority: ticket.priority,
+            reporterId: req.user._id,
+        });
+
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Ticket créé avec succès',
@@ -271,7 +281,10 @@ export const createTicket = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Create ticket error:', error);
+        logError('Create ticket failed', error, {
+            userId: req.user?._id,
+            type: req.body.type,
+        });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: error.message || ERROR_MESSAGES.SERVER_ERROR
@@ -418,6 +431,23 @@ export const assignTicket = async (req, res) => {
 
         await ticket.populate('reporter assignedTo assignedBy');
 
+        // Log ticket assignment
+        logBusiness('Ticket assigned', {
+            ticketId: ticket._id,
+            ticketNumber: ticket.ticketNumber,
+            workerId: worker._id,
+            workerName: worker.getFullName(),
+            assignedBy: req.user._id,
+        });
+
+        // Send email notification to worker (non-blocking)
+        sendTicketAssignedEmail(worker, ticket).catch(err => {
+            logError('Failed to send ticket assignment email', err, {
+                ticketId: ticket._id,
+                workerId: worker._id,
+            });
+        });
+
         res.json({
             success: true,
             message: 'Ticket assigné avec succès',
@@ -425,7 +455,10 @@ export const assignTicket = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Assign ticket error:', error);
+        logError('Assign ticket failed', error, {
+            ticketId: req.params.id,
+            workerId: req.body.workerId,
+        });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.SERVER_ERROR
@@ -465,6 +498,12 @@ export const addComment = async (req, res) => {
 
         await ticket.populate('comments.author', 'profile email');
 
+        logInfo('Comment added to ticket', {
+            ticketId: ticket._id,
+            ticketNumber: ticket.ticketNumber,
+            authorId: req.user._id,
+        });
+
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Commentaire ajouté',
@@ -475,7 +514,10 @@ export const addComment = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Add comment error:', error);
+        logError('Add comment failed', error, {
+            ticketId: req.params.id,
+            userId: req.user?._id,
+        });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.SERVER_ERROR

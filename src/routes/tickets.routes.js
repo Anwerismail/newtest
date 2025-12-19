@@ -21,12 +21,16 @@ import {
 } from '../controllers/admin/tickets.controller.js';
 import { protect, authorize } from '../middlewares/auth.middleware.js';
 import { validate, validateObjectId } from '../middlewares/validation.middleware.js';
+import { apiRateLimit } from '../middlewares/rateLimit.middleware.js';
 import { ROLES, TICKET_TYPES, TICKET_STATUS, PRIORITY } from '../utils/constants.js';
 
 const router = express.Router();
 
 // Toutes les routes nécessitent authentification
 router.use(protect);
+
+// Apply rate limiting to all ticket routes
+router.use(apiRateLimit);
 
 /**
  * Routes Admin

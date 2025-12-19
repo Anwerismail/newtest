@@ -15,9 +15,13 @@ import {
 } from '../controllers/templates.controller.js';
 import { protect, authorize, optionalAuth } from '../middlewares/auth.middleware.js';
 import { validate, validateObjectId } from '../middlewares/validation.middleware.js';
+import { apiRateLimit } from '../middlewares/rateLimit.middleware.js';
 import { ROLES } from '../utils/constants.js';
 
 const router = express.Router();
+
+// Apply rate limiting to all template routes
+router.use(apiRateLimit);
 
 /**
  * Routes Publiques / Utilisateurs

@@ -33,3 +33,4 @@ build/
 # Uploads (local dev)
 uploads/
 temp/
+test

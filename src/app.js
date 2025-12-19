@@ -5,12 +5,19 @@ import morgan from 'morgan';
 import { config } from './config/env.js';
 import { connectDB } from './config/database.js';
 import { HTTP_STATUS } from './utils/constants.js';
+import { logRequest, logInfo, logError } from './services/logger.service.js';
+import { initRedis, closeRedis } from './services/cache.service.js';
 
 // Initialize Express
 const app = express();
 
 // Connect to MongoDB
 connectDB();
+
+// Connect to Redis (optional - app will work without it)
+initRedis().catch(err => {
+    logError('Redis connection failed - caching disabled', err);
+});
 
 // Middlewares
 app.use(helmet()); // Security headers
@@ -26,6 +33,9 @@ if (config.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
 
+// Custom request logging
+app.use(logRequest);
+
 // Health check
 app.get('/health', (req, res) => {
     res.json({
@@ -40,6 +50,7 @@ import authRoutes from './routes/auth.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import templatesRoutes from './routes/templates.routes.js';
 import ticketsRoutes from './routes/tickets.routes.js';
+import projectsRoutes from './routes/projects.routes.js';
 
 // API Routes
 app.get('/api/v1', (req, res) => {
@@ -61,6 +72,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/templates', templatesRoutes);
 app.use('/api/v1/tickets', ticketsRoutes);
+app.use('/api/v1/projects', projectsRoutes);
 
 // 404 Handler
 app.use((req, res) => {
@@ -72,7 +84,12 @@ app.use((req, res) => {
 
 // Error Handler
 app.use((err, req, res, next) => {
-    console.error('❌ Error:', err);
+    logError('Request error', err, {
+        method: req.method,
+        url: req.originalUrl,
+        ip: req.ip,
+        userId: req.user?._id,
+    });
 
     const statusCode = err.statusCode || HTTP_STATUS.SERVER_ERROR;
     const message = err.message || 'Erreur serveur';
@@ -98,11 +115,24 @@ app.listen(PORT, () => {
 ║                                           ║
 ╚═══════════════════════════════════════════╝
   `);
+    
+    logInfo('Server started successfully', {
+        environment: config.NODE_ENV,
+        port: PORT,
+        url: config.API_URL,
+    });
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received, closing server...');
+process.on('SIGTERM', async () => {
+    logInfo('SIGTERM received, closing server...');
+    await closeRedis();
+    process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+    logInfo('SIGINT received, closing server...');
+    await closeRedis();
     process.exit(0);
 });
 

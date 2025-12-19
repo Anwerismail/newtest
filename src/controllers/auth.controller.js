@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config/env.js';
 import User from '../models/User.model.js';
 import { HTTP_STATUS, ERROR_MESSAGES, ROLES } from '../utils/constants.js';
+import { logInfo, logError, logAuth } from '../services/logger.service.js';
+import { sendWelcomeEmail } from '../services/email.service.js';
 
 /**
  * Génère un JWT token
@@ -76,6 +78,17 @@ export const register = async (req, res) => {
         // Générer le token
         const token = generateToken(user._id);
 
+        // Log successful registration
+        logAuth('REGISTER', user._id, true, {
+            email: user.email,
+            role: user.role,
+        });
+
+        // Send welcome email (non-blocking)
+        sendWelcomeEmail(user).catch(err => {
+            logError('Failed to send welcome email', err, { userId: user._id });
+        });
+
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Inscription réussie',
@@ -86,7 +99,7 @@ export const register = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Register error:', error);
+        logError('Registration failed', error, { email: req.body.email });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: error.message || ERROR_MESSAGES.SERVER_ERROR
@@ -146,6 +159,13 @@ export const login = async (req, res) => {
         // Générer le token
         const token = generateToken(user._id);
 
+        // Log successful login
+        logAuth('LOGIN', user._id, true, {
+            email: user.email,
+            role: user.role,
+            ip: req.ip,
+        });
+
         res.json({
             success: true,
             message: 'Connexion réussie',
@@ -156,7 +176,13 @@ export const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Login error:', error);
+        // Log failed login attempt
+        logAuth('LOGIN', null, false, {
+            email: req.body.email,
+            ip: req.ip,
+            error: error.message,
+        });
+        logError('Login failed', error, { email: req.body.email });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.SERVER_ERROR
@@ -179,7 +205,7 @@ export const getMe = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('GetMe error:', error);
+        logError('GetMe failed', error, { userId: req.user?._id });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.SERVER_ERROR
@@ -209,6 +235,8 @@ export const updateProfile = async (req, res) => {
 
         await user.save();
 
+        logInfo('Profile updated', { userId: user._id });
+
         res.json({
             success: true,
             message: 'Profil mis à jour',
@@ -216,7 +244,7 @@ export const updateProfile = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Update profile error:', error);
+        logError('Update profile failed', error, { userId: req.user?._id });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.SERVER_ERROR
@@ -258,13 +286,15 @@ export const changePassword = async (req, res) => {
         user.password = newPassword;
         await user.save();
 
+        logAuth('PASSWORD_CHANGE', user._id, true, { email: user.email });
+
         res.json({
             success: true,
             message: 'Mot de passe modifié avec succès'
         });
 
     } catch (error) {
-        console.error('Change password error:', error);
+        logError('Password change failed', error, { userId: req.user?._id });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.SERVER_ERROR
@@ -282,13 +312,15 @@ export const logout = async (req, res) => {
         // Dans une vraie application, on invaliderait le token ici
         // (par exemple en l'ajoutant à une blacklist Redis)
 
+        logAuth('LOGOUT', req.user._id, true, { email: req.user.email });
+
         res.json({
             success: true,
             message: 'Déconnexion réussie'
         });
 
     } catch (error) {
-        console.error('Logout error:', error);
+        logError('Logout failed', error, { userId: req.user?._id });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.SERVER_ERROR

@@ -8,7 +8,8 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "seed": "node src/database/seeds/admin.seed.js",
-    "seed:templates": "node src/database/seeds/templates.seed.js"
+    "seed:templates": "node src/database/seeds/templates.seed.js",
+    "seed:projects": "node src/database/seeds/projects.seed.js"
   },
   "keywords": ["Evolyte", "api", "cms"],
   "author": "Anwer Ismail",

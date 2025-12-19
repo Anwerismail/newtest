@@ -1,5 +1,7 @@
 import Template from '../models/Template.model.js';
 import { HTTP_STATUS, ERROR_MESSAGES, TEMPLATE_CATEGORIES } from '../utils/constants.js';
+import { setCache, getCache, deleteCache, deleteCachePattern, cacheKeys, cacheTTL } from '../services/cache.service.js';
+import { logInfo, logError } from '../services/logger.service.js';
 
 /**
  * @desc    Récupérer tous les templates (avec filtres)
@@ -106,6 +108,18 @@ export const getTemplateById = async (req, res) => {
     try {
         const { idOrSlug } = req.params;
 
+        // Try to get from cache first
+        const cacheKey = cacheKeys.template(idOrSlug);
+        const cachedTemplate = await getCache(cacheKey);
+
+        if (cachedTemplate) {
+            logInfo('Template cache hit', { idOrSlug });
+            return res.json({
+                success: true,
+                data: { template: cachedTemplate }
+            });
+        }
+
         // Chercher par ID ou slug
         const query = idOrSlug.match(/^[0-9a-fA-F]{24}$/)
             ? { _id: idOrSlug }
@@ -137,13 +151,16 @@ export const getTemplateById = async (req, res) => {
             });
         }
 
+        // Cache the template for 1 hour
+        await setCache(cacheKey, template, cacheTTL.LONG);
+
         res.json({
             success: true,
             data: { template }
         });
 
     } catch (error) {
-        console.error('Get template by ID error:', error);
+        logError('Get template by ID error', error, { idOrSlug: req.params.idOrSlug });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.SERVER_ERROR
@@ -199,10 +216,24 @@ export const getPopularTemplates = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 6;
 
+        // Try cache first
+        const cacheKey = `templates:popular:${limit}`;
+        const cached = await getCache(cacheKey);
+
+        if (cached) {
+            return res.json({
+                success: true,
+                data: { templates: cached }
+            });
+        }
+
         const templates = await Template.find({ status: 'published' })
             .sort({ 'metadata.downloads': -1, 'metadata.rating': -1 })
             .limit(limit)
             .select('-structure.html -structure.css -structure.js');
+
+        // Cache for 30 minutes
+        await setCache(cacheKey, templates, cacheTTL.MEDIUM);
 
         res.json({
             success: true,
@@ -210,7 +241,7 @@ export const getPopularTemplates = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Get popular templates error:', error);
+        logError('Get popular templates error', error);
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.SERVER_ERROR
@@ -395,6 +426,17 @@ export const updateTemplate = async (req, res) => {
             });
         }
 
+        // Invalidate cache for this template
+        await deleteCache(cacheKeys.template(req.params.id));
+        if (template.slug) {
+            await deleteCache(cacheKeys.template(template.slug));
+        }
+        
+        // Invalidate popular templates cache
+        await deleteCachePattern('templates:popular:*');
+
+        logInfo('Template updated and cache invalidated', { templateId: req.params.id });
+
         res.json({
             success: true,
             message: 'Template mis à jour',
@@ -402,7 +444,7 @@ export const updateTemplate = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Update template error:', error);
+        logError('Update template error', error, { templateId: req.params.id });
         res.status(HTTP_STATUS.SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.SERVER_ERROR
