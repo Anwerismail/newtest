@@ -39,18 +39,19 @@ app.get('/health', (req, res) => {
 import authRoutes from './routes/auth.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import templatesRoutes from './routes/templates.routes.js';
+import ticketsRoutes from './routes/tickets.routes.js';
 
 // API Routes
 app.get('/api/v1', (req, res) => {
     res.json({
-        message: 'SiteForge API v1',
+        message: 'Evolyte API v1',
         version: '1.0.0',
         endpoints: {
             auth: '/api/v1/auth',
             admin: '/api/v1/admin',
             templates: '/api/v1/templates',
-            projects: '/api/v1/projects',
-            tickets: '/api/v1/tickets'
+            tickets: '/api/v1/tickets',
+            projects: '/api/v1/projects'
         }
     });
 });
@@ -59,6 +60,7 @@ app.get('/api/v1', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/templates', templatesRoutes);
+app.use('/api/v1/tickets', ticketsRoutes);
 
 // 404 Handler
 app.use((req, res) => {
@@ -88,7 +90,7 @@ app.listen(PORT, () => {
     console.log(`
 ╔═══════════════════════════════════════════╗
 ║                                           ║
-║       🚀 SITEFORGE API STARTED           ║
+║       🚀 EVOLYTE API STARTED             ║
 ║                                           ║
 ║  Environment: ${config.NODE_ENV.padEnd(27)}║
 ║  Port: ${PORT.toString().padEnd(33)}║
