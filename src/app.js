@@ -2,11 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
 import { config } from './config/env.js';
 import { connectDB } from './config/database.js';
 import { HTTP_STATUS } from './utils/constants.js';
 import { logRequest, logInfo, logError } from './services/logger.service.js';
 import { initRedis, closeRedis } from './services/cache.service.js';
+import swaggerSpec from './config/swagger.js';
+import { securityHeaders, sanitizeInput, preventParameterPollution, detectSuspiciousActivity, validateHttpMethods } from './middlewares/security.middleware.js';
 
 // Initialize Express
 const app = express();
@@ -21,12 +24,17 @@ initRedis().catch(err => {
 
 // Middlewares
 app.use(helmet()); // Security headers
+app.use(securityHeaders); // Additional security headers
+app.use(validateHttpMethods); // Validate HTTP methods
 app.use(cors({
     origin: config.FRONTEND_URL,
     credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(sanitizeInput); // XSS protection
+app.use(preventParameterPollution); // Prevent parameter pollution
+app.use(detectSuspiciousActivity); // Detect attacks
 
 // Logging
 if (config.NODE_ENV === 'development') {
@@ -35,6 +43,15 @@ if (config.NODE_ENV === 'development') {
 
 // Custom request logging
 app.use(logRequest);
+
+// API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'Evolyte API Documentation',
+    customCss: '.swagger-ui .topbar { display: none }',
+    swaggerOptions: {
+        persistAuthorization: true,
+    },
+}));
 
 // Health check
 app.get('/health', (req, res) => {

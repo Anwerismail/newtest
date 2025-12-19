@@ -56,6 +56,9 @@ export const config = {
         API_TOKEN: process.env.NETLIFY_API_TOKEN
     },
 
+    // Sentry
+    SENTRY_DSN: process.env.SENTRY_DSN,
+
     // Rate Limiting
     RATE_LIMIT: {
         WINDOW_MS: 15 * 60 * 1000, // 15 minutes
