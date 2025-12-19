@@ -118,10 +118,11 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start Server
-const PORT = config.PORT;
-app.listen(PORT, () => {
-    console.log(`
+// Start Server (skip in Vercel serverless environment)
+if (process.env.VERCEL !== '1') {
+    const PORT = config.PORT;
+    app.listen(PORT, () => {
+        console.log(`
 ╔═══════════════════════════════════════════╗
 ║                                           ║
 ║       🚀 EVOLYTE API STARTED             ║
@@ -132,13 +133,14 @@ app.listen(PORT, () => {
 ║                                           ║
 ╚═══════════════════════════════════════════╝
   `);
-    
-    logInfo('Server started successfully', {
-        environment: config.NODE_ENV,
-        port: PORT,
-        url: config.API_URL,
+        
+        logInfo('Server started successfully', {
+            environment: config.NODE_ENV,
+            port: PORT,
+            url: config.API_URL,
+        });
     });
-});
+}
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {

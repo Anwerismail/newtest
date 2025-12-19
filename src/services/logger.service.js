@@ -54,49 +54,73 @@ transports.push(
 );
 
 // File transports (only in production or if explicitly enabled)
-if (process.env.NODE_ENV === 'production' || process.env.ENABLE_FILE_LOGGING === 'true') {
+// Skip in serverless environments (Vercel, AWS Lambda, etc.) - they're read-only
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+
+if (!isServerless && (process.env.NODE_ENV === 'production' || process.env.ENABLE_FILE_LOGGING === 'true')) {
   const logsDir = path.join(dirname(dirname(__dirname)), 'logs');
   
-  // All logs
-  transports.push(
-    new winston.transports.File({
-      filename: path.join(logsDir, 'all.log'),
-      format: format,
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    })
-  );
+  try {
+    // Create logs directory if it doesn't exist
+    if (!require('fs').existsSync(logsDir)) {
+      require('fs').mkdirSync(logsDir, { recursive: true });
+    }
+    
+    // All logs
+    transports.push(
+      new winston.transports.File({
+        filename: path.join(logsDir, 'all.log'),
+        format: format,
+        maxsize: 5242880, // 5MB
+        maxFiles: 5,
+      })
+    );
 
-  // Error logs
-  transports.push(
-    new winston.transports.File({
-      filename: path.join(logsDir, 'error.log'),
-      level: 'error',
-      format: format,
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    })
-  );
+    // Error logs
+    transports.push(
+      new winston.transports.File({
+        filename: path.join(logsDir, 'error.log'),
+        level: 'error',
+        format: format,
+        maxsize: 5242880, // 5MB
+        maxFiles: 5,
+      })
+    );
+  } catch (error) {
+    // Silently skip file logging if we can't create the directory
+    // This is normal in serverless/read-only environments
+    console.warn('File logging disabled: Cannot create logs directory (read-only filesystem)');
+  }
 }
 
 // Create the logger
-const logger = winston.createLogger({
+const loggerConfig = {
   level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'development' ? 'debug' : 'info'),
   levels,
   format,
   transports,
-  exceptionHandlers: [
-    new winston.transports.File({ 
-      filename: path.join(dirname(dirname(__dirname)), 'logs', 'exceptions.log') 
-    }),
-  ],
-  rejectionHandlers: [
-    new winston.transports.File({ 
-      filename: path.join(dirname(dirname(__dirname)), 'logs', 'rejections.log') 
-    }),
-  ],
   exitOnError: false,
-});
+};
+
+// Only add file handlers for exceptions/rejections in non-serverless environments
+if (!isServerless) {
+  try {
+    loggerConfig.exceptionHandlers = [
+      new winston.transports.File({ 
+        filename: path.join(dirname(dirname(__dirname)), 'logs', 'exceptions.log') 
+      }),
+    ];
+    loggerConfig.rejectionHandlers = [
+      new winston.transports.File({ 
+        filename: path.join(dirname(dirname(__dirname)), 'logs', 'rejections.log') 
+      }),
+    ];
+  } catch (error) {
+    // Skip file handlers in serverless
+  }
+}
+
+const logger = winston.createLogger(loggerConfig);
 
 // Helper functions for structured logging
 export const logError = (message, error, metadata = {}) => {
