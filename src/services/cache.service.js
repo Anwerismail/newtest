@@ -23,10 +23,22 @@ export const initRedis = async () => {
     redisClient = createClient({
       url: ENV.REDIS_URL,
       socket: {
+        connectTimeout: 5000, // 5 seconds connection timeout
         reconnectStrategy: (retries) => {
+          // In serverless (Vercel), don't retry aggressively
+          if (process.env.VERCEL === '1') {
+            // Only retry 3 times in serverless
+            if (retries > 3) {
+              logError('Redis reconnection failed in serverless environment');
+              return false; // Stop reconnecting
+            }
+            return Math.min(retries * 50, 500); // Quick retries (max 500ms)
+          }
+          
+          // In traditional server, retry more aggressively
           if (retries > 10) {
             logError('Redis reconnection failed after 10 attempts');
-            return new Error('Redis max reconnection attempts reached');
+            return false; // Stop reconnecting
           }
           return Math.min(retries * 100, 3000); // Max 3 seconds between retries
         },

@@ -3,9 +3,10 @@ import { config } from './env.js';
 
 export const connectDB = async () => {
     try {
+        // Remove deprecated options - they're now default in MongoDB driver v4+
         const conn = await mongoose.connect(config.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+            socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
         });
 
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);

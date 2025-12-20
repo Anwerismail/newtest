@@ -262,7 +262,7 @@ const TicketSchema = new mongoose.Schema({
 });
 
 // Index pour recherche rapide
-TicketSchema.index({ ticketNumber: 1 });
+// Note: ticketNumber already has unique: true, no need for separate index
 TicketSchema.index({ project: 1, status: 1 });
 TicketSchema.index({ assignedTo: 1, status: 1 });
 TicketSchema.index({ reporter: 1 });

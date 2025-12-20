@@ -1,122 +1,149 @@
-# 🚀 Evolyte Backend - Production Ready!
+# 🚀 Evolyte Backend API
 
-Backend API pour Evolyte - Plateforme complète de création de sites web avec système de tickets, gestion de projets, et déploiement automatique.
+Backend REST API for Evolyte - A complete platform for website creation with ticketing system, project management, and automatic deployment.
 
-## 🎯 Project Status: 100% Production Ready! ✅
+## 🎯 Status
 
-**Version:** 3.0.0  
-**Status:** Ready for Deployment  
-**Test Coverage:** 70%+  
-**Features:** 17 major features implemented  
-**Documentation:** Complete (11 guides)  
+**Version:** 1.0.0  
+**Environment:** Production Ready  
+**Deployment:** Vercel  
+**Live API:** https://evolyte-backend.vercel.app  
 
-## 📦 Technologies
+## 🛠️ Tech Stack
 
-### Core Stack
-- **Runtime**: Node.js 20+
-- **Framework**: Express.js
-- **Database**: MongoDB Atlas
-- **Cache**: Redis (Upstash)
-- **Auth**: JWT (Role-Based Access Control)
-- **Storage**: Cloudinary
+- **Runtime:** Node.js 20+
+- **Framework:** Express.js
+- **Database:** MongoDB Atlas
+- **Cache:** Redis (Upstash)
+- **Authentication:** JWT with Role-Based Access Control
+- **Storage:** Cloudinary
+- **Email:** Nodemailer
+- **Logging:** Winston
+- **Monitoring:** Sentry
+- **Deployment:** Vercel Serverless
+- **Documentation:** Swagger/OpenAPI
+- **Testing:** Jest + Supertest
 
-### Additional Services
-- **Email**: Nodemailer (Gmail)
-- **Logging**: Winston
-- **Error Tracking**: Sentry
-- **Deployment**: Vercel, Netlify
-- **Testing**: Jest + Supertest
-- **API Docs**: Swagger/OpenAPI
+## 🔒 Security Features
 
-### Security
-- Rate Limiting (Role-based)
-- Input Sanitization (XSS Protection)
-- CSRF Protection
-- Helmet Security Headers
-- Password Hashing (bcrypt)
-- JWT Token Management
+- ✅ Helmet Security Headers with CSP
+- ✅ Rate Limiting (Role-based)
+- ✅ Input Sanitization (XSS Protection)
+- ✅ Parameter Pollution Prevention
+- ✅ Password Hashing (bcrypt)
+- ✅ JWT Token Management
+- ✅ MongoDB Injection Prevention
+- ✅ CORS Configuration
 
-## 🚀 Démarrage Rapide
+## 🚀 Quick Start
 
-### 1. Installation
+### 1. Clone & Install
 
 ```bash
-cd backend
+git clone <repository-url>
+cd Evolyte/backend
 npm install
 ```
 
-### 2. Configuration
+### 2. Environment Setup
 
-Créer un fichier `.env` à partir de `.env.example` :
+Create `.env` file from template:
 
 ```bash
 cp .env.example .env
 ```
 
-Configurer les variables d'environnement (au minimum) :
+Configure required variables:
 
 ```env
-MONGODB_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
+# Database
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/evolyte
+
+# Authentication
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRE=7d
+
+# Email (Optional)
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+
+# Redis Cache (Optional)
+REDIS_URL=redis://default:password@host:port
+
+# Cloudinary (Optional)
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+
+# Sentry (Optional)
+SENTRY_DSN=your-sentry-dsn
+
+# Frontend
+FRONTEND_URL=http://localhost:3000
 ```
 
-### 3. Seed Database (Créer admin)
+### 3. Seed Database
+
+Create default users:
 
 ```bash
 npm run seed
 ```
 
-Ceci va créer :
-- ✅ Super Admin : `admin@evolyte.com` / `Admin@123`
-- ✅ Manager : `manager@evolyte.com` / `Manager@123`
-- ✅ Worker : `worker@evolyte.com` / `Worker@123`
-- ✅ Client : `client@evolyte.com` / `Client@123`
+**Default accounts created:**
+- Super Admin: `admin@evolyte.com` / `Admin@123`
+- Manager: `manager@evolyte.com` / `Manager@123`
+- Worker: `worker@evolyte.com` / `Worker@123`
+- Client: `client@evolyte.com` / `Client@123`
 
-**⚠️ IMPORTANT : Changez ces mots de passe en production !**
+⚠️ **Change these passwords in production!**
 
-### 4. Lancer le serveur
+### 4. Start Development Server
 
 ```bash
-# Development
 npm run dev
-
-# Production
-npm start
 ```
 
-Le serveur démarre sur `http://localhost:5000`
+Server starts at `http://localhost:5000`
+
+### 5. View API Documentation
+
+Open Swagger UI: `http://localhost:5000/api-docs`
 
 ## 📡 API Endpoints
 
-### Authentication
+### Base URL
+- **Local:** `http://localhost:5000`
+- **Production:** `https://evolyte-backend.vercel.app`
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/v1/auth/register` | Inscription | ❌ |
-| POST | `/api/v1/auth/login` | Connexion | ❌ |
-| GET | `/api/v1/auth/me` | Profil utilisateur | ✅ |
-| PUT | `/api/v1/auth/profile` | Modifier profil | ✅ |
-| PUT | `/api/v1/auth/password` | Changer mot de passe | ✅ |
-| POST | `/api/v1/auth/logout` | Déconnexion | ✅ |
+### Core Endpoints
 
-### Exemples de requêtes
+| Category | Method | Endpoint | Description | Auth |
+|----------|--------|----------|-------------|------|
+| **Health** | GET | `/health` | Health check | ❌ |
+| **Docs** | GET | `/api-docs` | Swagger UI | ❌ |
+| **Auth** | POST | `/api/v1/auth/register` | Register user | ❌ |
+| **Auth** | POST | `/api/v1/auth/login` | Login | ❌ |
+| **Auth** | GET | `/api/v1/auth/me` | Get profile | ✅ |
+| **Auth** | PUT | `/api/v1/auth/profile` | Update profile | ✅ |
+| **Auth** | PUT | `/api/v1/auth/password` | Change password | ✅ |
+| **Templates** | GET | `/api/v1/templates` | List templates | ❌ |
+| **Templates** | GET | `/api/v1/templates/:id` | Get template | ❌ |
+| **Projects** | GET | `/api/v1/projects` | List projects | ✅ |
+| **Projects** | POST | `/api/v1/projects` | Create project | ✅ |
+| **Projects** | GET | `/api/v1/projects/:id` | Get project | ✅ |
+| **Tickets** | GET | `/api/v1/tickets` | List tickets | ✅ |
+| **Tickets** | POST | `/api/v1/tickets` | Create ticket | ✅ |
+| **Admin** | GET | `/api/v1/admin/users` | List users | 🔐 Admin |
 
-#### 1. Inscription
+### Quick API Test
 
+#### 1. Health Check
 ```bash
-curl -X POST http://localhost:5000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "Password@123",
-    "firstName": "John",
-    "lastName": "Doe",
-    "role": "CLIENT"
-  }'
+curl http://localhost:5000/health
 ```
 
-#### 2. Connexion
-
+#### 2. Login
 ```bash
 curl -X POST http://localhost:5000/api/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -126,160 +153,129 @@ curl -X POST http://localhost:5000/api/v1/auth/login \
   }'
 ```
 
-Réponse :
-```json
-{
-  "success": true,
-  "message": "Connexion réussie",
-  "data": {
-    "user": { ... },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
-```
-
-#### 3. Récupérer profil (avec token)
-
+#### 3. Get Profile (with token)
 ```bash
-curl -X GET http://localhost:5000/api/v1/auth/me \
-  -H "Authorization: Bearer YOUR_TOKEN"
+curl http://localhost:5000/api/v1/auth/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-## 🔐 Rôles et Permissions
+**Full API documentation:** Visit `/api-docs` for interactive Swagger UI
 
-| Rôle | Description | Niveau |
-|------|-------------|--------|
-| `SUPER_ADMIN` | Accès total | 4 |
-| `ADMIN` | Administration | 3 |
-| `PROJECT_MANAGER` | Gestion projets & tickets | 2 |
-| `WORKER` | Développement | 1 |
-| `CLIENT` | Utilisateur final | 0 |
+## 🔐 User Roles & Permissions
 
-## 📁 Structure du Projet
+| Role | Description | Access Level |
+|------|-------------|--------------|
+| `SUPER_ADMIN` | Full system access | 4 |
+| `ADMIN` | Administrative access | 3 |
+| `PROJECT_MANAGER` | Manage projects & tickets | 2 |
+| `WORKER` | Development tasks | 1 |
+| `CLIENT` | End user access | 0 |
+
+## 📁 Project Structure
 
 ```
 backend/
+├── api/
+│   └── index.js              # Vercel serverless entry point
 ├── src/
-│   ├── config/           # Configuration (DB, env, etc.)
-│   ├── models/           # Modèles MongoDB
-│   ├── controllers/      # Logique métier
-│   ├── routes/           # Routes API
-│   ├── middlewares/      # Middlewares (auth, validation, etc.)
-│   ├── services/         # Services (email, storage, etc.)
-│   ├── utils/            # Utilitaires
-│   └── app.js           # Application Express
-├── .env                  # Variables d'environnement
-├── .env.example          # Template .env
+│   ├── config/              # Configuration files
+│   │   ├── database.js      # MongoDB connection
+│   │   ├── env.js           # Environment variables
+│   │   ├── swagger.js       # API documentation
+│   │   └── sentry.js        # Error tracking
+│   ├── controllers/         # Business logic
+│   │   ├── auth.controller.js
+│   │   ├── projects.controller.js
+│   │   ├── tickets.controller.js
+│   │   ├── templates.controller.js
+│   │   └── admin/
+│   ├── models/              # MongoDB schemas
+│   │   ├── User.model.js
+│   │   ├── Project.model.js
+│   │   ├── Ticket.model.js
+│   │   └── Template.model.js
+│   ├── routes/              # API routes
+│   ├── middlewares/         # Express middlewares
+│   │   ├── auth.middleware.js
+│   │   ├── validation.middleware.js
+│   │   ├── security.middleware.js
+│   │   └── rateLimit.middleware.js
+│   ├── services/            # External services
+│   │   ├── cache.service.js        # Redis caching
+│   │   ├── email.service.js        # Email sending
+│   │   ├── storage.service.js      # Cloudinary uploads
+│   │   ├── deployment.service.js   # Vercel/Netlify
+│   │   └── logger.service.js       # Winston logging
+│   ├── utils/               # Utilities
+│   ├── views/               # HTML templates
+│   │   └── swagger.html     # Custom Swagger UI
+│   └── app.js              # Express app
+├── tests/                   # Test suite
+│   ├── unit/
+│   ├── integration/
+│   └── helpers/
+├── .env.example             # Environment template
+├── vercel.json              # Vercel configuration
 └── package.json
 ```
 
-## ✅ Features Implemented
+## ✨ Features
 
-### Authentication & Users
-- [x] User Registration & Login (JWT)
-- [x] Role-Based Access Control (5 roles)
-- [x] Password Reset Flow (Secure tokens)
-- [x] Profile Management
-- [x] Account Security (Lockout, 2FA structure)
+### 🔐 Authentication & Authorization
+- ✅ JWT-based authentication
+- ✅ Role-based access control (5 roles)
+- ✅ Password reset with secure tokens
+- ✅ Profile management
+- ✅ Account security
 
-### Core Features
-- [x] Template System (Browse, rate, download)
-- [x] Ticket System (Full workflow, comments, time tracking)
-- [x] Project Management (CRUD, versioning, collaboration)
-- [x] File Upload (Cloudinary integration)
-- [x] Real Deployments (Vercel, Netlify APIs)
-- [x] Email Notifications (6 types)
+### 🎫 Ticketing System
+- ✅ Create, update, assign tickets
+- ✅ Comments and attachments
+- ✅ Status workflow management
+- ✅ Time tracking
+- ✅ Priority and labels
 
-### Performance & Security
-- [x] Rate Limiting (Role-based, 5 types)
-- [x] Redis Caching (Performance optimization)
-- [x] Enhanced Security (8 layers)
-- [x] Comprehensive Logging (Winston)
-- [x] Error Tracking (Sentry)
+### 📦 Project Management
+- ✅ CRUD operations
+- ✅ Collaboration tools
+- ✅ Version control integration
+- ✅ Deployment management
+- ✅ Custom domains
 
-### Development & Operations
-- [x] Testing Suite (70%+ coverage)
-- [x] API Documentation (Swagger UI)
-- [x] Production Deployment Guides
-- [x] Monitoring & Alerts
+### 🎨 Template System
+- ✅ Browse templates
+- ✅ Template ratings
+- ✅ Download tracking
+- ✅ Category filtering
 
-**Total: 17 Major Features ✅**
+### 🚀 Deployment Integration
+- ✅ Vercel API integration
+- ✅ Netlify API integration
+- ✅ Automatic deployments
+- ✅ Environment management
 
-## 🐛 Debugging
+### 📧 Notifications
+- ✅ Email notifications
+- ✅ Password reset emails
+- ✅ Welcome emails
+- ✅ Ticket updates
 
-Si le serveur ne démarre pas, vérifier :
-
-1. MongoDB est connecté (`✅ MongoDB Connected`)
-2. Variables d'environnement sont définies
-3. Port 5000 n'est pas déjà utilisé
-4. Node.js version >= 20
-
-## 📝 Logs
-
-Les logs en développement affichent :
-- ✅ Succès en vert
-- ⚠️ Warnings en jaune
-- ❌ Erreurs en rouge
-
-## 🚀 Deployment
-
-### Quick Deploy to Vercel (Recommended)
-
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Login
-vercel login
-
-# Deploy
-vercel
-```
-
-**Complete guides available:**
-- 📖 **VERCEL_QUICK_START.md** - Deploy in 10 minutes
-- 📖 **VERCEL_DEPLOYMENT.md** - Complete guide with all details
-- 📖 **TEST_BEFORE_DEPLOY.md** - Local testing guide
-
-### What you get on Vercel (FREE):
-- ✅ Automatic HTTPS
-- ✅ Global CDN
-- ✅ 100GB bandwidth/month
-- ✅ Auto-deploy from GitHub
-- ✅ Zero configuration needed
-
-**Your app will be live at:** `https://evolyte-backend.vercel.app`
-
-## 📚 Documentation
-
-### Getting Started
-- **README.md** - This file (quick overview)
-- **TEST_BEFORE_DEPLOY.md** - Test locally before deployment
-
-### Deployment
-- **VERCEL_QUICK_START.md** - 10-minute deploy guide ⚡
-- **VERCEL_DEPLOYMENT.md** - Complete deployment guide
-- **PRODUCTION_DEPLOYMENT.md** - Alternative platforms guide
-
-### Development
-- **SERVICES_INTEGRATION.md** - Services layer documentation (Phase 1)
-- **PHASE_2_SUMMARY.md** - Rate limiting, caching, password reset (Phase 2)
-- **PHASE_3_COMPLETE.md** - Testing, security, monitoring (Phase 3)
-
-### Testing
-- **tests/README.md** - Complete testing guide
-- Run tests: `npm test`
-- Coverage: `npm run test:coverage`
-
-### API Documentation
-- **Interactive Docs:** `http://localhost:5000/api-docs` (Swagger UI)
-- **Live Docs:** `https://evolyte-backend.vercel.app/api-docs`
+### 🛡️ Security & Performance
+- ✅ Rate limiting (role-based)
+- ✅ Redis caching
+- ✅ Input sanitization
+- ✅ Security headers
+- ✅ Error tracking (Sentry)
+- ✅ Comprehensive logging (Winston)
 
 ## 🧪 Testing
 
 ```bash
 # Run all tests
 npm test
+
+# Run with coverage
+npm run test:coverage
 
 # Run unit tests only
 npm run test:unit
@@ -289,20 +285,106 @@ npm run test:integration
 
 # Watch mode
 npm run test:watch
-
-# Coverage report
-npm run test:coverage
 ```
 
-**Test Coverage: 70%+** ✅
+## 🐛 Troubleshooting
 
-## 🤝 Contribution
+### Server won't start?
+1. ✅ Check MongoDB connection (`MONGODB_URI` is correct)
+2. ✅ Verify environment variables are set
+3. ✅ Ensure port 5000 is available
+4. ✅ Node.js version >= 20
 
-1. Créer une branche (`git checkout -b feature/AmazingFeature`)
-2. Commit (`git commit -m 'Add AmazingFeature'`)
-3. Push (`git push origin feature/AmazingFeature`)
-4. Ouvrir une Pull Request
+### MongoDB Atlas connection error?
+1. ✅ Whitelist `0.0.0.0/0` in Network Access
+2. ✅ Check username/password in connection string
+3. ✅ URL-encode special characters in password
+
+### Redis connection issues?
+- Redis is optional - app works without it
+- Check `REDIS_URL` format
+- Verify Upstash Redis is active
+
+### Swagger UI not loading?
+- Clear browser cache
+- Check `/api-docs.json` endpoint
+- Verify Helmet CSP configuration
+
+## 🚀 Deployment to Vercel
+
+### Prerequisites
+1. MongoDB Atlas with IP `0.0.0.0/0` whitelisted
+2. Environment variables ready
+3. Vercel account (free)
+
+### Deploy Steps
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Login to Vercel
+vercel login
+
+# Deploy (follow prompts)
+vercel --prod
+```
+
+### Environment Variables (Vercel Dashboard)
+
+Add these in **Settings → Environment Variables**:
+
+```
+MONGODB_URI
+JWT_SECRET
+JWT_EXPIRE
+FRONTEND_URL
+EMAIL_USER (optional)
+EMAIL_PASS (optional)
+REDIS_URL (optional)
+CLOUDINARY_CLOUD_NAME (optional)
+CLOUDINARY_API_KEY (optional)
+CLOUDINARY_API_SECRET (optional)
+SENTRY_DSN (optional)
+```
+
+✅ **Enable for:** Production, Preview, Development
+
+### Verify Deployment
+
+After deployment:
+1. Check health: `https://your-app.vercel.app/health`
+2. View docs: `https://your-app.vercel.app/api-docs`
+3. Check logs: `vercel logs --prod`
+
+### Free Tier Benefits
+- ✅ Automatic HTTPS
+- ✅ Global CDN
+- ✅ 100GB bandwidth/month
+- ✅ Auto-deploy from Git
+- ✅ Serverless functions
+
+## 📚 Available Scripts
+
+```bash
+npm start          # Start production server
+npm run dev        # Start development server with nodemon
+npm test           # Run tests
+npm run seed       # Seed database with default users
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+## 📄 License
+
+This project is private and proprietary.
 
 ---
 
-**🎉 Ready for Production! Deploy now with Vercel!** 🚀
+**Made with ❤️ by Evolyte Team**

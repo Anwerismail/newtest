@@ -325,7 +325,7 @@ const ProjectSchema = new mongoose.Schema({
 // Index pour recherche et performance
 ProjectSchema.index({ name: 'text', description: 'text' });
 ProjectSchema.index({ owner: 1, status: 1 });
-ProjectSchema.index({ slug: 1 });
+// Note: slug already has unique: true, no need for separate index
 ProjectSchema.index({ 'domain.subdomain': 1 });
 ProjectSchema.index({ 'domain.customDomain.domain': 1 });
 ProjectSchema.index({ status: 1, createdAt: -1 });

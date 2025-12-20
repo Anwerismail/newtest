@@ -232,7 +232,7 @@ const TemplateSchema = new mongoose.Schema({
 TemplateSchema.index({ name: 'text', description: 'text', tags: 'text' });
 TemplateSchema.index({ category: 1, status: 1 });
 TemplateSchema.index({ type: 1, complexity: 1 });
-TemplateSchema.index({ slug: 1 });
+// Note: slug already has unique: true, no need for separate index
 TemplateSchema.index({ 'metadata.downloads': -1 });
 TemplateSchema.index({ 'metadata.rating': -1 });
 

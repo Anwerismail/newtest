@@ -207,7 +207,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Index pour recherche rapide
-UserSchema.index({ email: 1 });
+// Note: email already has unique: true, no need for separate index
 UserSchema.index({ role: 1, status: 1 });
 UserSchema.index({ 'profile.firstName': 'text', 'profile.lastName': 'text' });
 

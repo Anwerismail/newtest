@@ -20,22 +20,163 @@ router.use(protect);
 router.use(authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.PROJECT_MANAGER));
 
 /**
- * Routes Users
+ * @swagger
+ * /api/v1/admin/users/stats:
+ *   get:
+ *     summary: Get user statistics
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistics retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
-
-// GET /api/v1/admin/users/stats - Statistiques
 router.get('/users/stats', getUserStats);
 
-// GET /api/v1/admin/users/workers/available - Workers disponibles
+/**
+ * @swagger
+ * /api/v1/admin/users/workers/available:
+ *   get:
+ *     summary: Get available workers
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Available workers retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ */
 router.get('/users/workers/available', getAvailableWorkers);
 
-// GET /api/v1/admin/users - Liste tous les users
+/**
+ * @swagger
+ * /api/v1/admin/users:
+ *   get:
+ *     summary: Get all users
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *         description: Filter by role
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Users retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ */
 router.get('/users', getAllUsers);
 
-// GET /api/v1/admin/users/:id - Récupérer un user
+/**
+ * @swagger
+ * /api/v1/admin/users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
 router.get('/users/:id', validateObjectId('id'), getUserById);
 
-// POST /api/v1/admin/users - Créer un user
+/**
+ * @swagger
+ * /api/v1/admin/users:
+ *   post:
+ *     summary: Create a new user
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - firstName
+ *               - lastName
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: newuser@example.com
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 example: Password@123
+ *               firstName:
+ *                 type: string
+ *                 example: John
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
+ *               role:
+ *                 type: string
+ *                 enum: [SUPER_ADMIN, ADMIN, PROJECT_MANAGER, WORKER, CLIENT]
+ *                 default: CLIENT
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ */
 router.post(
     '/users',
     [
@@ -63,7 +204,51 @@ router.post(
     createUser
 );
 
-// PUT /api/v1/admin/users/:id - Modifier un user
+/**
+ * @swagger
+ * /api/v1/admin/users/{id}:
+ *   put:
+ *     summary: Update a user
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               role:
+ *                 type: string
+ *                 enum: [SUPER_ADMIN, ADMIN, PROJECT_MANAGER, WORKER, CLIENT]
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE, SUSPENDED]
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
 router.put(
     '/users/:id',
     [
@@ -96,10 +281,33 @@ router.put(
     updateUser
 );
 
-// DELETE /api/v1/admin/users/:id - Supprimer un user (SUPER_ADMIN only)
+/**
+ * @swagger
+ * /api/v1/admin/users/{id}:
+ *   delete:
+ *     summary: Delete a user (Super Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
 router.delete(
     '/users/:id',
-    authorize(ROLES.SUPER_ADMIN), // Seul SUPER_ADMIN peut supprimer
+    authorize(ROLES.SUPER_ADMIN),
     validateObjectId('id'),
     deleteUser
 );

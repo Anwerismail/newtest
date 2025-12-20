@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import swaggerUi from 'swagger-ui-express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from './config/env.js';
 import { connectDB } from './config/database.js';
 import { HTTP_STATUS } from './utils/constants.js';
@@ -11,16 +12,75 @@ import { initRedis, closeRedis } from './services/cache.service.js';
 import swaggerSpec from './config/swagger.js';
 import { securityHeaders, sanitizeInput, preventParameterPollution, detectSuspiciousActivity, validateHttpMethods } from './middlewares/security.middleware.js';
 
+// ES Module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Initialize Express
 const app = express();
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB (with error handling for serverless)
+if (process.env.VERCEL !== '1') {
+    // Traditional server: connect immediately
+    connectDB();
+} else {
+    // Serverless: connect on first request to avoid timeout during cold start
+    let isConnecting = false;
+    let isConnected = false;
+    
+    app.use(async (req, res, next) => {
+        if (isConnected) {
+            return next();
+        }
+        
+        if (!isConnecting) {
+            isConnecting = true;
+            try {
+                await connectDB();
+                isConnected = true;
+            } catch (err) {
+                logError('MongoDB connection failed', err);
+                return res.status(503).json({ 
+                    success: false, 
+                    message: 'Database connection error' 
+                });
+            }
+        } else {
+            // Wait for connection to complete
+            const maxWait = 5000; // 5 seconds
+            const startTime = Date.now();
+            while (!isConnected && Date.now() - startTime < maxWait) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            if (!isConnected) {
+                return res.status(503).json({ 
+                    success: false, 
+                    message: 'Database connection timeout' 
+                });
+            }
+        }
+        
+        next();
+    });
+}
 
 // Connect to Redis (optional - app will work without it)
-initRedis().catch(err => {
+// Don't block startup on Redis connection in serverless
+const redisPromise = initRedis().catch(err => {
     logError('Redis connection failed - caching disabled', err);
+    return null;
 });
+
+// In serverless, give up on Redis quickly to avoid blocking
+if (process.env.VERCEL === '1') {
+    Promise.race([
+        redisPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis timeout')), 2000))
+    ]).catch(() => {
+        logInfo('Redis skipped in serverless environment');
+    });
+}
 
 // Middlewares
 // Configure Helmet with CSP exceptions for Swagger UI
@@ -56,26 +116,16 @@ if (config.NODE_ENV === 'development') {
 app.use(logRequest);
 
 // API Documentation
-// Serve Swagger UI with proper configuration for Vercel
-const swaggerUiOptions = {
-    customSiteTitle: 'Evolyte API Documentation',
-    customCss: '.swagger-ui .topbar { display: none }',
-    swaggerOptions: {
-        persistAuthorization: true,
-        url: '/api-docs.json', // Serve spec as JSON endpoint
-    },
-    explorer: false,
-};
-
 // Serve the Swagger spec as JSON
 app.get('/api-docs.json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
 });
 
-// Serve Swagger UI
-app.use('/api-docs', swaggerUi.serve);
-app.get('/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+// Serve custom Swagger UI HTML (works better with Vercel serverless)
+app.get('/api-docs', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'swagger.html'));
+});
 
 // Health check
 app.get('/health', (req, res) => {

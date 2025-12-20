@@ -23,7 +23,7 @@ const options = {
         description: 'Development server',
       },
       {
-        url: 'https://api.evolyte.com',
+        url: 'https://evolyte-backend.vercel.app/',
         description: 'Production server',
       },
     ],

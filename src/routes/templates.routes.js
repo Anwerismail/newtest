@@ -24,28 +24,210 @@ const router = express.Router();
 router.use(apiRateLimit);
 
 /**
- * Routes Publiques / Utilisateurs
+ * @swagger
+ * /api/v1/templates:
+ *   get:
+ *     summary: Get all templates
+ *     tags: [Templates]
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Filter by type (static, react, nextjs, vue)
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search in name and description
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Templates retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Template'
+ *                 pagination:
+ *                   type: object
  */
-
-// GET /api/v1/templates - Liste tous les templates
 router.get('/', getAllTemplates);
 
-// GET /api/v1/templates/categories - Catégories
+/**
+ * @swagger
+ * /api/v1/templates/categories:
+ *   get:
+ *     summary: Get all template categories
+ *     tags: [Templates]
+ *     responses:
+ *       200:
+ *         description: Categories retrieved successfully
+ */
 router.get('/categories', getCategories);
 
-// GET /api/v1/templates/popular - Templates populaires
+/**
+ * @swagger
+ * /api/v1/templates/popular:
+ *   get:
+ *     summary: Get popular templates
+ *     tags: [Templates]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Popular templates retrieved successfully
+ */
 router.get('/popular', getPopularTemplates);
 
-// GET /api/v1/templates/recommended - Templates recommandés (requiert auth)
+/**
+ * @swagger
+ * /api/v1/templates/recommended:
+ *   get:
+ *     summary: Get recommended templates for user
+ *     tags: [Templates]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Recommended templates retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
 router.get('/recommended', protect, getRecommendedTemplates);
 
-// GET /api/v1/templates/:idOrSlug - Récupérer un template
+/**
+ * @swagger
+ * /api/v1/templates/{idOrSlug}:
+ *   get:
+ *     summary: Get template by ID or slug
+ *     tags: [Templates]
+ *     parameters:
+ *       - in: path
+ *         name: idOrSlug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Template ID or slug
+ *     responses:
+ *       200:
+ *         description: Template retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Template'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
 router.get('/:idOrSlug', optionalAuth, getTemplateById);
 
-// POST /api/v1/templates/:id/clone - Cloner un template (requiert auth)
+/**
+ * @swagger
+ * /api/v1/templates/{id}/clone:
+ *   post:
+ *     summary: Clone a template to create a new project
+ *     tags: [Templates]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - projectName
+ *             properties:
+ *               projectName:
+ *                 type: string
+ *                 example: My New Website
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Template cloned successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
 router.post('/:id/clone', protect, validateObjectId('id'), cloneTemplate);
 
-// POST /api/v1/templates/:id/review - Ajouter une review
+/**
+ * @swagger
+ * /api/v1/templates/{id}/review:
+ *   post:
+ *     summary: Add a review to a template
+ *     tags: [Templates]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - rating
+ *             properties:
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 5
+ *               comment:
+ *                 type: string
+ *                 maxLength: 500
+ *                 example: Great template, easy to customize!
+ *     responses:
+ *       201:
+ *         description: Review added successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
 router.post(
     '/:id/review',
     protect,
@@ -65,10 +247,21 @@ router.post(
 );
 
 /**
- * Routes Admin
+ * @swagger
+ * /api/v1/templates/admin/stats:
+ *   get:
+ *     summary: Get template statistics (Admin)
+ *     tags: [Templates]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistics retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
-
-// GET /api/v1/templates/admin/stats - Statistiques (admin)
 router.get(
     '/admin/stats',
     protect,
@@ -76,7 +269,52 @@ router.get(
     getTemplateStats
 );
 
-// POST /api/v1/templates/admin - Créer template (admin)
+/**
+ * @swagger
+ * /api/v1/templates/admin:
+ *   post:
+ *     summary: Create a new template (Admin)
+ *     tags: [Templates]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - description
+ *               - category
+ *               - type
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Modern Portfolio
+ *               description:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *                 enum: [PORTFOLIO, BUSINESS, ECOMMERCE, BLOG, RESTAURANT, EVENT]
+ *               type:
+ *                 type: string
+ *                 enum: [static, react, nextjs, vue]
+ *               preview:
+ *                 type: object
+ *                 properties:
+ *                   thumbnail:
+ *                     type: string
+ *     responses:
+ *       201:
+ *         description: Template created successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ */
 router.post(
     '/admin',
     protect,
@@ -92,7 +330,43 @@ router.post(
     createTemplate
 );
 
-// PUT /api/v1/templates/admin/:id - Modifier template (admin)
+/**
+ * @swagger
+ * /api/v1/templates/admin/{id}:
+ *   put:
+ *     summary: Update a template (Admin)
+ *     tags: [Templates]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *     responses:
+ *       200:
+ *         description: Template updated successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
 router.put(
     '/admin/:id',
     protect,
@@ -101,7 +375,30 @@ router.put(
     updateTemplate
 );
 
-// DELETE /api/v1/templates/admin/:id - Supprimer template (super admin)
+/**
+ * @swagger
+ * /api/v1/templates/admin/{id}:
+ *   delete:
+ *     summary: Delete a template (Super Admin only)
+ *     tags: [Templates]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Template deleted successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
 router.delete(
     '/admin/:id',
     protect,

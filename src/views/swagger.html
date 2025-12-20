@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolyte API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.10.5/swagger-ui.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .swagger-ui .topbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.10.5/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.10.5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            // Fetch the Swagger spec from the JSON endpoint
+            fetch('/api-docs.json')
+                .then(response => response.json())
+                .then(spec => {
+                    window.ui = SwaggerUIBundle({
+                        spec: spec,
+                        dom_id: '#swagger-ui',
+                        deepLinking: true,
+                        presets: [
+                            SwaggerUIBundle.presets.apis,
+                            SwaggerUIStandalonePreset
+                        ],
+                        plugins: [
+                            SwaggerUIBundle.plugins.DownloadUrl
+                        ],
+                        layout: "StandaloneLayout",
+                        persistAuthorization: true
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading Swagger spec:', error);
+                    document.getElementById('swagger-ui').innerHTML = 
+                        '<div style="padding: 20px; color: red;">' +
+                        '<h2>Error Loading API Documentation</h2>' +
+                        '<p>Could not load the API specification. Please try refreshing the page.</p>' +
+                        '<p>Error: ' + error.message + '</p>' +
+                        '</div>';
+                });
+        };
+    </script>
+</body>
+</html>
