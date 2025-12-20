@@ -122,6 +122,82 @@ router.get('/recommended', protect, getRecommendedTemplates);
 
 /**
  * @swagger
+ * /api/v1/templates:
+ *   post:
+ *     summary: Create a new template (Worker/Manager/Admin)
+ *     tags: [Templates]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - description
+ *               - category
+ *               - type
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Modern Portfolio
+ *               description:
+ *                 type: string
+ *                 example: A beautiful portfolio template with modern design
+ *               category:
+ *                 type: string
+ *                 enum: [PORTFOLIO, BUSINESS, ECOMMERCE, BLOG, RESTAURANT, EVENT]
+ *                 example: PORTFOLIO
+ *               type:
+ *                 type: string
+ *                 enum: [static, react, nextjs, vue]
+ *                 example: react
+ *               preview:
+ *                 type: object
+ *                 properties:
+ *                   thumbnail:
+ *                     type: string
+ *                     example: https://example.com/thumbnail.jpg
+ *                   images:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: [modern, portfolio, responsive]
+ *               complexity:
+ *                 type: string
+ *                 enum: [BEGINNER, INTERMEDIATE, ADVANCED]
+ *                 default: INTERMEDIATE
+ *     responses:
+ *       201:
+ *         description: Template created successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.post(
+    '/',
+    protect,
+    authorize(ROLES.WORKER, ROLES.PROJECT_MANAGER, ROLES.ADMIN, ROLES.SUPER_ADMIN),
+    [
+        body('name').notEmpty().withMessage('Nom requis'),
+        body('description').notEmpty().withMessage('Description requise'),
+        body('category').notEmpty().withMessage('Catégorie requise'),
+        body('type').notEmpty().withMessage('Type requis'),
+        body('preview.thumbnail').notEmpty().withMessage('Thumbnail requis'),
+        validate
+    ],
+    createTemplate
+);
+
+/**
+ * @swagger
  * /api/v1/templates/{idOrSlug}:
  *   get:
  *     summary: Get template by ID or slug
@@ -269,66 +345,7 @@ router.get(
     getTemplateStats
 );
 
-/**
- * @swagger
- * /api/v1/templates/admin:
- *   post:
- *     summary: Create a new template (Admin)
- *     tags: [Templates]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - description
- *               - category
- *               - type
- *             properties:
- *               name:
- *                 type: string
- *                 example: Modern Portfolio
- *               description:
- *                 type: string
- *               category:
- *                 type: string
- *                 enum: [PORTFOLIO, BUSINESS, ECOMMERCE, BLOG, RESTAURANT, EVENT]
- *               type:
- *                 type: string
- *                 enum: [static, react, nextjs, vue]
- *               preview:
- *                 type: object
- *                 properties:
- *                   thumbnail:
- *                     type: string
- *     responses:
- *       201:
- *         description: Template created successfully
- *       400:
- *         $ref: '#/components/responses/BadRequest'
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
- *       403:
- *         $ref: '#/components/responses/Forbidden'
- */
-router.post(
-    '/admin',
-    protect,
-    authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN),
-    [
-        body('name').notEmpty().withMessage('Nom requis'),
-        body('description').notEmpty().withMessage('Description requise'),
-        body('category').notEmpty().withMessage('Catégorie requise'),
-        body('type').notEmpty().withMessage('Type requis'),
-        body('preview.thumbnail').notEmpty().withMessage('Thumbnail requis'),
-        validate
-    ],
-    createTemplate
-);
+// Duplicate route removed - now handled above before :idOrSlug route
 
 /**
  * @swagger
