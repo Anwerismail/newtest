@@ -23,7 +23,18 @@ initRedis().catch(err => {
 });
 
 // Middlewares
-app.use(helmet()); // Security headers
+// Configure Helmet with CSP exceptions for Swagger UI
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+            imgSrc: ["'self'", "data:", "https://validator.swagger.io"],
+            fontSrc: ["'self'", "data:"]
+        }
+    }
+})); // Security headers with CSP for Swagger UI
 app.use(securityHeaders); // Additional security headers
 app.use(validateHttpMethods); // Validate HTTP methods
 app.use(cors({
@@ -45,13 +56,26 @@ if (config.NODE_ENV === 'development') {
 app.use(logRequest);
 
 // API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+// Serve Swagger UI with proper configuration for Vercel
+const swaggerUiOptions = {
     customSiteTitle: 'Evolyte API Documentation',
     customCss: '.swagger-ui .topbar { display: none }',
     swaggerOptions: {
         persistAuthorization: true,
+        url: '/api-docs.json', // Serve spec as JSON endpoint
     },
-}));
+    explorer: false,
+};
+
+// Serve the Swagger spec as JSON
+app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+});
+
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve);
+app.get('/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Health check
 app.get('/health', (req, res) => {

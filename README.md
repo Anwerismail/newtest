@@ -248,7 +248,7 @@ vercel
 - ✅ Auto-deploy from GitHub
 - ✅ Zero configuration needed
 
-**Your app will be live at:** `https://your-app.vercel.app`
+**Your app will be live at:** `https://evolyte-backend.vercel.app`
 
 ## 📚 Documentation
 
@@ -273,7 +273,7 @@ vercel
 
 ### API Documentation
 - **Interactive Docs:** `http://localhost:5000/api-docs` (Swagger UI)
-- **Live Docs:** `https://your-app.vercel.app/api-docs`
+- **Live Docs:** `https://evolyte-backend.vercel.app/api-docs`
 
 ## 🧪 Testing
 
