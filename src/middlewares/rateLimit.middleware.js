@@ -94,7 +94,7 @@ export const dynamicRateLimit = rateLimit({
  */
 export const strictRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
+  max: process.env.NODE_ENV === 'production' ? 5 : 1000, // 1000 en dev, 5 en prod
   keyGenerator: (req) => req.ip, // Always use IP for auth endpoints
   handler: (req, res) => {
     logSecurity('Strict rate limit exceeded - Possible attack', 'warn', {

@@ -42,9 +42,13 @@ export const getAllTickets = async (req, res) => {
         if (category) query.category = category;
         if (assignedTo) query.assignedTo = assignedTo;
 
-        // Recherche textuelle
+        // Recherche textuelle (avec regex pour éviter de nécessiter un index text)
         if (search) {
-            query.$text = { $search: search };
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { ticketNumber: { $regex: search, $options: 'i' } }
+            ];
         }
 
         // Pagination
@@ -97,7 +101,15 @@ export const getAllTickets = async (req, res) => {
  */
 export const getMyTickets = async (req, res) => {
     try {
-        const { status, page = 1, limit = 20 } = req.query;
+        const { 
+            status, 
+            type,
+            priority,
+            category,
+            search,
+            page = 1, 
+            limit = 20 
+        } = req.query;
 
         const query = {};
 
@@ -119,7 +131,20 @@ export const getMyTickets = async (req, res) => {
             ];
         }
 
+        // Apply filters
         if (status) query.status = status;
+        if (type) query.type = type;
+        if (priority) query.priority = priority;
+        if (category) query.category = category;
+        
+        // Search (same as getAllTickets)
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { ticketNumber: { $regex: search, $options: 'i' } }
+            ];
+        }
 
         const skip = (page - 1) * limit;
 
@@ -184,7 +209,8 @@ export const getTicketById = async (req, res) => {
         // Vérifier les permissions
         // CLIENT peut voir uniquement ses tickets
         if (req.user.role === ROLES.CLIENT) {
-            if (ticket.reporter.toString() !== req.user._id.toString()) {
+            const reporterId = ticket.reporter._id || ticket.reporter;
+            if (reporterId.toString() !== req.user._id.toString()) {
                 return res.status(HTTP_STATUS.FORBIDDEN).json({
                     success: false,
                     message: 'Accès non autorisé à ce ticket'
@@ -237,7 +263,7 @@ export const createTicket = async (req, res) => {
             }
         }
 
-        // Créer le ticket
+        // Créer le ticket avec workflow initial
         const ticket = await Ticket.create({
             type,
             category,
@@ -250,18 +276,14 @@ export const createTicket = async (req, res) => {
             tags,
             project: projectId,
             reporter: req.user._id,
-            status: 'PENDING'
-        });
-
-        // Ajouter l'entrée workflow initiale
-        ticket.workflow.push({
             status: 'PENDING',
-            changedBy: req.user._id,
-            changedAt: new Date(),
-            comment: 'Ticket créé'
+            workflow: [{
+                status: 'PENDING',
+                changedBy: req.user._id,
+                changedAt: new Date(),
+                comment: 'Ticket créé'
+            }]
         });
-
-        await ticket.save();
 
         // Populate pour retourner les infos complètes
         await ticket.populate('reporter', 'profile email');
@@ -486,7 +508,8 @@ export const addComment = async (req, res) => {
 
         // Vérifier l'accès
         if (req.user.role === ROLES.CLIENT) {
-            if (ticket.reporter.toString() !== req.user._id.toString()) {
+            const reporterId = ticket.reporter._id || ticket.reporter;
+            if (reporterId.toString() !== req.user._id.toString()) {
                 return res.status(HTTP_STATUS.FORBIDDEN).json({
                     success: false,
                     message: 'Accès non autorisé'
@@ -544,7 +567,8 @@ export const trackTime = async (req, res) => {
         }
 
         // Seul le worker assigné peut tracker son temps
-        if (ticket.assignedTo.toString() !== req.user._id.toString()) {
+        const assignedToId = ticket.assignedTo?._id || ticket.assignedTo;
+        if (!assignedToId || assignedToId.toString() !== req.user._id.toString()) {
             return res.status(HTTP_STATUS.FORBIDDEN).json({
                 success: false,
                 message: 'Vous ne pouvez tracker le temps que sur vos tickets assignés'
