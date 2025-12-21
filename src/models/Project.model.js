@@ -12,7 +12,7 @@ const ProjectSchema = new mongoose.Schema({
 
     slug: {
         type: String,
-        required: true,
+        required: false, // Auto-generated in pre-save hook
         unique: true,
         lowercase: true
     },
@@ -27,6 +27,21 @@ const ProjectSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+
+    // Worker assigné (développeur)
+    assignedWorker: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+
+    assignedAt: {
+        type: Date
+    },
+
+    assignedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     },
 
     // Template utilisé
@@ -332,7 +347,7 @@ ProjectSchema.index({ status: 1, createdAt: -1 });
 
 // Générer le slug avant sauvegarde
 ProjectSchema.pre('save', function(next) {
-    if (this.isModified('name') && !this.slug) {
+    if (!this.slug || this.isModified('name')) {
         // Générer slug unique
         const baseSlug = this.name
             .toLowerCase()

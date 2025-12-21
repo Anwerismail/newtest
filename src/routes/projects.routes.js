@@ -25,6 +25,11 @@ import {
 } from '../controllers/projects.controller.js';
 
 import {
+    assignWorker,
+    getAvailableWorkers
+} from '../controllers/projects.controller_assign.js';
+
+import {
     getProjectStats,
     getAllProjects,
     getDashboard,
@@ -72,6 +77,43 @@ router.post('/', protect, createProject);
 
 /**
  * @swagger
+ * /api/v1/projects:
+ *   get:
+ *     summary: Get all projects (accessible to user)
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by name or description
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Projects retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.get('/', protect, getMyProjects);
+
+/**
+ * @swagger
  * /api/v1/projects/my:
  *   get:
  *     summary: Get my projects
@@ -101,6 +143,33 @@ router.post('/', protect, createProject);
  *         $ref: '#/components/responses/Unauthorized'
  */
 router.get('/my', protect, getMyProjects);
+
+/**
+ * @swagger
+ * /api/v1/projects/available-workers:
+ *   get:
+ *     summary: Get available workers
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: specialization
+ *         schema:
+ *           type: string
+ *         description: Filter by specialization
+ *       - in: query
+ *         name: skills
+ *         schema:
+ *           type: string
+ *         description: Filter by skills (comma-separated)
+ *     responses:
+ *       200:
+ *         description: Workers retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.get('/available-workers', protect, getAvailableWorkers);
 
 /**
  * @swagger
@@ -209,6 +278,46 @@ router.post('/:id/revisions/:revisionId/restore', protect, validateObjectId('id'
 
 router.post('/:id/collaborators', protect, validateObjectId('id'), addCollaborator);
 router.delete('/:id/collaborators/:userId', protect, validateObjectId('id'), validateObjectId('userId'), removeCollaborator);
+
+// ========================================
+// Worker Assignment
+// ========================================
+
+/**
+ * @swagger
+ * /api/v1/projects/{id}/assign-worker:
+ *   put:
+ *     summary: Assign a worker to the project
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               workerId:
+ *                 type: string
+ *                 description: Worker user ID (null to unassign)
+ *     responses:
+ *       200:
+ *         description: Worker assigned successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.put('/:id/assign-worker', protect, validateObjectId('id'), assignWorker);
 
 /**
  * @swagger

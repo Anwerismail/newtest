@@ -39,17 +39,22 @@ export const createProject = async (req, res) => {
         }
 
         // Vérifier limite de projets (selon abonnement)
-        const userProjectsCount = await Project.countDocuments({ 
-            owner: req.user._id,
-            status: { $nin: ['ARCHIVED'] }
-        });
-
-        const maxProjects = req.user.clientProfile?.subscription?.maxProjects || 1;
-        if (maxProjects !== -1 && userProjectsCount >= maxProjects) {
-            return res.status(403).json({
-                success: false,
-                message: `Limite de projets atteinte (${maxProjects}). Mettez à jour votre abonnement.`
+        // Admins et Super Admins n'ont pas de limite
+        const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN';
+        
+        if (!isAdmin) {
+            const userProjectsCount = await Project.countDocuments({ 
+                owner: req.user._id,
+                status: { $nin: ['ARCHIVED'] }
             });
+
+            const maxProjects = req.user.clientProfile?.subscription?.maxProjects || 1;
+            if (maxProjects !== -1 && userProjectsCount >= maxProjects) {
+                return res.status(403).json({
+                    success: false,
+                    message: `Limite de projets atteinte (${maxProjects}). Mettez à jour votre abonnement.`
+                });
+            }
         }
 
         // Initialiser le contenu depuis le template
@@ -129,9 +134,16 @@ export const createProject = async (req, res) => {
  */
 export const getMyProjects = async (req, res) => {
     try {
-        const { status, search, sortBy = 'createdAt', order = 'desc' } = req.query;
+        const { status, search, sortBy = 'createdAt', order = 'desc', page = 1, limit = 10 } = req.query;
 
-        const filter = { owner: req.user._id };
+        // Admins et Super Admins voient tous les projets
+        // Les autres utilisateurs voient seulement leurs projets
+        const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN';
+        
+        const filter = {};
+        if (!isAdmin) {
+            filter.owner = req.user._id;
+        }
 
         // Filtres
         if (status) filter.status = status;
@@ -143,11 +155,18 @@ export const getMyProjects = async (req, res) => {
         }
 
         const sortOrder = order === 'desc' ? -1 : 1;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        // Count total
+        const total = await Project.countDocuments(filter);
 
         const projects = await Project.find(filter)
+            .populate('owner', 'email profile')
             .populate('template', 'name category type preview')
             .populate('initialTicket', 'ticketNumber type status')
             .sort({ [sortBy]: sortOrder })
+            .skip(skip)
+            .limit(parseInt(limit))
             .lean();
 
         // Ajouter les URLs et progression
@@ -163,9 +182,12 @@ export const getMyProjects = async (req, res) => {
 
         res.json({
             success: true,
-            data: {
-                projects: projectsWithMeta,
-                total: projectsWithMeta.length
+            data: projectsWithMeta,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                pages: Math.ceil(total / parseInt(limit))
             }
         });
 
