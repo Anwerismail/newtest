@@ -104,6 +104,7 @@ const allowedOrigins = [
     'http://localhost:5174',
     'http://localhost:5175',
     'http://localhost:3000',
+    'https://evolyte-frontend.vercel.app',
 ];
 
 app.use(cors({
@@ -116,6 +117,11 @@ app.use(cors({
             return callback(null, true);
         }
         
+        // In production, allow Vercel preview deployments
+        if (origin && origin.endsWith('.vercel.app')) {
+            return callback(null, true);
+        }
+        
         // Check if origin is in allowed list
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
@@ -124,7 +130,7 @@ app.use(cors({
         callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
