@@ -98,6 +98,8 @@ export const createProject = async (req, res) => {
         // Populate pour la réponse
         await project.populate([
             { path: 'owner', select: 'email profile' },
+            { path: 'projectManager', select: 'email profile role' },
+            { path: 'assignedWorker', select: 'email profile workerProfile' },
             { path: 'template', select: 'name category type preview' }
         ]);
 
@@ -162,6 +164,8 @@ export const getMyProjects = async (req, res) => {
 
         const projects = await Project.find(filter)
             .populate('owner', 'email profile')
+            .populate('projectManager', 'email profile role')
+            .populate('assignedWorker', 'email profile workerProfile')
             .populate('template', 'name category type preview')
             .populate('initialTicket', 'ticketNumber type status')
             .sort({ [sortBy]: sortOrder })
@@ -210,6 +214,8 @@ export const getProjectById = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id)
             .populate('owner', 'email profile')
+            .populate('projectManager', 'email profile role')
+            .populate('assignedWorker', 'email profile workerProfile')
             .populate('template', 'name category type preview blocks config')
             .populate('initialTicket', 'ticketNumber type status')
             .populate('tickets', 'ticketNumber type status priority title')
@@ -298,6 +304,8 @@ export const updateProject = async (req, res) => {
 
         await project.populate([
             { path: 'owner', select: 'email profile' },
+            { path: 'projectManager', select: 'email profile role' },
+            { path: 'assignedWorker', select: 'email profile workerProfile' },
             { path: 'template', select: 'name category type preview' }
         ]);
 

@@ -29,6 +29,21 @@ const ProjectSchema = new mongoose.Schema({
         required: true
     },
 
+    // Project Manager (Admin/Manager qui supervise)
+    projectManager: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+
+    managerAssignedAt: {
+        type: Date
+    },
+
+    managerAssignedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+
     // Worker assigné (développeur)
     assignedWorker: {
         type: mongoose.Schema.Types.ObjectId,

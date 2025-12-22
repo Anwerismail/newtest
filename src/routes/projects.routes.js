@@ -30,6 +30,11 @@ import {
 } from '../controllers/projects.controller_assign.js';
 
 import {
+    assignProjectManager,
+    getAvailableManagers
+} from '../controllers/projects.controller_manager.js';
+
+import {
     getProjectStats,
     getAllProjects,
     getDashboard,
@@ -143,6 +148,24 @@ router.get('/', protect, getMyProjects);
  *         $ref: '#/components/responses/Unauthorized'
  */
 router.get('/my', protect, getMyProjects);
+
+/**
+ * @swagger
+ * /api/v1/projects/available-managers:
+ *   get:
+ *     summary: Get available project managers
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Managers retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ */
+router.get('/available-managers', protect, getAvailableManagers);
 
 /**
  * @swagger
@@ -318,6 +341,42 @@ router.delete('/:id/collaborators/:userId', protect, validateObjectId('id'), val
  *         $ref: '#/components/responses/NotFound'
  */
 router.put('/:id/assign-worker', protect, validateObjectId('id'), assignWorker);
+
+/**
+ * @swagger
+ * /api/v1/projects/{id}/assign-manager:
+ *   put:
+ *     summary: Assign a project manager to the project
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               managerId:
+ *                 type: string
+ *                 description: Manager user ID (null to unassign)
+ *     responses:
+ *       200:
+ *         description: Manager assigned successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.put('/:id/assign-manager', protect, validateObjectId('id'), assignProjectManager);
 
 /**
  * @swagger

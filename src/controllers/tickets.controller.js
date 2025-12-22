@@ -2,7 +2,7 @@ import Ticket from '../models/Ticket.model.js';
 import User from '../models/User.model.js';
 import { HTTP_STATUS, ERROR_MESSAGES, ROLES } from '../utils/constants.js';
 import { logInfo, logError, logBusiness } from '../services/logger.service.js';
-import { sendTicketAssignedEmail } from '../services/email.service.js';
+import { sendTicketAssignedEmail, sendTicketStatusChangedEmail } from '../services/email.service.js';
 
 /**
  * @desc    Récupérer tous les tickets (selon rôle)
@@ -10,6 +10,7 @@ import { sendTicketAssignedEmail } from '../services/email.service.js';
  * @access  Private
  */
 export const getAllTickets = async (req, res) => {
+    console.log('🚨 getAllTickets CALLED! URL:', req.originalUrl);
     try {
         const {
             type,
@@ -100,6 +101,7 @@ export const getAllTickets = async (req, res) => {
  * @access  Private
  */
 export const getMyTickets = async (req, res) => {
+    console.log('🚨 getMyTickets CALLED! URL:', req.originalUrl);
     try {
         const { 
             status, 
@@ -107,11 +109,26 @@ export const getMyTickets = async (req, res) => {
             priority,
             category,
             search,
+            project,
             page = 1, 
             limit = 20 
         } = req.query;
 
         const query = {};
+        const conditions = [];
+
+        // Filtre par projet
+        if (project) {
+            console.log('🔍 Project filter received:', project);
+            if (project === 'no-project') {
+                query.project = null;
+            } else {
+                query.project = project;
+            }
+        }
+        
+        console.log('👤 User role:', req.user.role);
+        console.log('📋 Query before role filter:', JSON.stringify(query));
 
         // CLIENT : ses tickets créés
         if (req.user.role === ROLES.CLIENT) {
@@ -125,11 +142,29 @@ export const getMyTickets = async (req, res) => {
 
         // MANAGER : tickets dont il est responsable
         else if (req.user.role === ROLES.PROJECT_MANAGER) {
-            query.$or = [
-                { assignedBy: req.user._id },
-                { reporter: req.user._id }
-            ];
+            // Si project filter existe, on combine avec $and
+            if (project) {
+                query.$and = [
+                    query.project ? { project: query.project } : { project: null },
+                    {
+                        $or: [
+                            { assignedBy: req.user._id },
+                            { reporter: req.user._id }
+                        ]
+                    }
+                ];
+                delete query.project; // Déjà dans $and
+            } else {
+                query.$or = [
+                    { assignedBy: req.user._id },
+                    { reporter: req.user._id }
+                ];
+            }
         }
+
+        // ADMIN et SUPER_ADMIN voient tout (sauf si filtre projet)
+
+        console.log('📋 Final query:', JSON.stringify(query));
 
         // Apply filters
         if (status) query.status = status;
@@ -249,8 +284,12 @@ export const createTicket = async (req, res) => {
             details,
             dueDate,
             tags,
-            projectId
+            projectId,
+            project
         } = req.body;
+
+        // Support both 'project' and 'projectId' for backward compatibility
+        const projectToAssign = project || projectId;
 
         // Vérifier que le CLIENT ne peut créer que certains types
         if (req.user.role === ROLES.CLIENT) {
@@ -274,7 +313,7 @@ export const createTicket = async (req, res) => {
             details,
             dueDate,
             tags,
-            project: projectId,
+            project: projectToAssign,
             reporter: req.user._id,
             status: 'PENDING',
             workflow: [{
@@ -402,9 +441,23 @@ export const changeTicketStatus = async (req, res) => {
             });
         }
 
+        const oldStatus = ticket.status;
         await ticket.changeStatus(status, req.user._id, comment);
 
         await ticket.populate('reporter assignedTo assignedBy');
+
+        // Send email notification to assigned worker (non-blocking)
+        if (ticket.assignedTo && oldStatus !== status) {
+            const worker = await User.findById(ticket.assignedTo._id || ticket.assignedTo);
+            if (worker) {
+                sendTicketStatusChangedEmail(worker, ticket, oldStatus, status).catch(err => {
+                    logError('Failed to send ticket status change email', err, {
+                        ticketId: ticket._id,
+                        workerId: worker._id,
+                    });
+                });
+            }
+        }
 
         res.json({
             success: true,

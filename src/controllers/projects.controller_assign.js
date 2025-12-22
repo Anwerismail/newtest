@@ -1,6 +1,7 @@
 import Project from '../models/Project.model.js';
 import User from '../models/User.model.js';
-import { logInfo, logBusiness } from '../services/logger.service.js';
+import { logInfo, logBusiness, logError } from '../services/logger.service.js';
+import { sendProjectAssignedEmail } from '../services/email.service.js';
 
 /**
  * @desc    Assigner un worker au projet
@@ -83,6 +84,19 @@ export const assignWorker = async (req, res) => {
             workerId: workerId,
             assignedBy: req.user._id
         });
+
+        // Send email notification to worker (non-blocking)
+        if (workerId && project.assignedWorker) {
+            const worker = await User.findById(workerId);
+            if (worker) {
+                sendProjectAssignedEmail(worker, project, 'WORKER').catch(err => {
+                    logError('Failed to send project assignment email', err, {
+                        projectId: project._id,
+                        workerId: worker._id,
+                    });
+                });
+            }
+        }
 
         res.json({
             success: true,

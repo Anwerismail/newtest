@@ -136,6 +136,100 @@ const templates = {
     text: `Nouveau ticket assigné\n\nBonjour ${user.firstName},\n\nTicket: ${ticket.ticketNumber}\nTitre: ${ticket.title}\nType: ${ticket.type}\nPriorité: ${ticket.priority}\n\nVoir: ${ENV.FRONTEND_URL}/tickets/${ticket._id}\n\nL'équipe Evolyte`,
   }),
 
+  ticketStatusChanged: (user, ticket, oldStatus, newStatus) => ({
+    subject: `📋 Ticket ${ticket.ticketNumber}: Statut changé`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .ticket-info { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .status-change { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0; }
+          .status-badge { padding: 8px 16px; border-radius: 20px; font-weight: bold; }
+          .status-old { background: #e0e0e0; color: #666; }
+          .status-new { background: #4caf50; color: white; }
+          .arrow { font-size: 24px; color: #667eea; }
+          .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📋 Mise à jour du Ticket</h1>
+          </div>
+          <div class="content">
+            <p>Bonjour <strong>${user.firstName}</strong>,</p>
+            <p>Le statut du ticket <strong>${ticket.ticketNumber}</strong> a été modifié :</p>
+            <div class="ticket-info">
+              <p><strong>Titre :</strong> ${ticket.title}</p>
+              <div class="status-change">
+                <span class="status-badge status-old">${oldStatus}</span>
+                <span class="arrow">→</span>
+                <span class="status-badge status-new">${newStatus}</span>
+              </div>
+            </div>
+            <a href="${ENV.FRONTEND_URL}/tickets/${ticket._id}" class="button">Voir le ticket</a>
+            <p style="margin-top: 20px;">L'équipe Evolyte 💜</p>
+          </div>
+          <div class="footer">
+            <p>© 2025 Evolyte. Tous droits réservés.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `Mise à jour du ticket ${ticket.ticketNumber}\n\nBonjour ${user.firstName},\n\nStatut: ${oldStatus} → ${newStatus}\nTitre: ${ticket.title}\n\nVoir: ${ENV.FRONTEND_URL}/tickets/${ticket._id}\n\nL'équipe Evolyte`,
+  }),
+
+  projectAssigned: (user, project, role) => ({
+    subject: `🚀 Vous avez été assigné au projet "${project.name}"`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .project-info { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .role-badge { display: inline-block; padding: 5px 15px; background: #667eea; color: white; border-radius: 20px; font-weight: bold; }
+          .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🚀 Nouveau Projet Assigné</h1>
+          </div>
+          <div class="content">
+            <p>Bonjour <strong>${user.firstName}</strong>,</p>
+            <p>Vous avez été assigné à un nouveau projet en tant que <span class="role-badge">${role}</span> :</p>
+            <div class="project-info">
+              <p><strong>Nom du projet :</strong> ${project.name}</p>
+              <p><strong>Description :</strong> ${project.description}</p>
+              ${project.domain ? `<p><strong>Domaine :</strong> ${project.domain}</p>` : ''}
+            </div>
+            <a href="${ENV.FRONTEND_URL}/projects/${project._id}" class="button">Voir le projet</a>
+            <p style="margin-top: 20px;">Bon travail !</p>
+            <p>L'équipe Evolyte 💜</p>
+          </div>
+          <div class="footer">
+            <p>© 2025 Evolyte. Tous droits réservés.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `Nouveau projet assigné\n\nBonjour ${user.firstName},\n\nProjet: ${project.name}\nRôle: ${role}\nDescription: ${project.description}\n\nVoir: ${ENV.FRONTEND_URL}/projects/${project._id}\n\nL'équipe Evolyte`,
+  }),
+
   projectInvitation: (user, project, invitedBy, role) => ({
     subject: `🤝 Invitation à collaborer sur "${project.name}"`,
     html: `
@@ -347,6 +441,16 @@ export const sendTicketAssignedEmail = async (user, ticket) => {
   return sendEmail(user.email, subject, html, text);
 };
 
+export const sendTicketStatusChangedEmail = async (user, ticket, oldStatus, newStatus) => {
+  const { subject, html, text } = templates.ticketStatusChanged(user, ticket, oldStatus, newStatus);
+  return sendEmail(user.email, subject, html, text);
+};
+
+export const sendProjectAssignedEmail = async (user, project, role) => {
+  const { subject, html, text } = templates.projectAssigned(user, project, role);
+  return sendEmail(user.email, subject, html, text);
+};
+
 export const sendProjectInvitationEmail = async (user, project, invitedBy, role) => {
   const { subject, html, text } = templates.projectInvitation(user, project, invitedBy, role);
   return sendEmail(user.email, subject, html, text);
@@ -367,6 +471,8 @@ export default {
   sendWelcomeEmail,
   sendPasswordResetEmail,
   sendTicketAssignedEmail,
+  sendTicketStatusChangedEmail,
+  sendProjectAssignedEmail,
   sendProjectInvitationEmail,
   sendDeploymentSuccessEmail,
   sendDeploymentFailedEmail,

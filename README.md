@@ -3,7 +3,9 @@
 Backend REST API for Evolyte - A complete platform for website creation with ticketing system, project management, and automatic deployment.
 
 ## 🎯 Status
-
+🚨 getMyTickets CALLED! URL: /api/v1/tickets/my?page=1&limit=50
+getMyTickets CALLED! URL: /api/v1/tickets/my?page=1&limit=50
+getMyTickets CALLED! URL: /api/v1/tickets/my?page=1&limit=50
 **Version:** 1.0.0  
 **Environment:** Production Ready  
 **Deployment:** Vercel  
