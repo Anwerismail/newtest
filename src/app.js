@@ -174,6 +174,7 @@ import adminRoutes from './routes/admin.routes.js';
 import templatesRoutes from './routes/templates.routes.js';
 import ticketsRoutes from './routes/tickets.routes.js';
 import projectsRoutes from './routes/projects.routes.js';
+import teamRoutes from './routes/team.routes.js';
 
 // API Routes
 app.get('/api/v1', (req, res) => {
@@ -196,6 +197,7 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/templates', templatesRoutes);
 app.use('/api/v1/tickets', ticketsRoutes);
 app.use('/api/v1/projects', projectsRoutes);
+app.use('/api/v1/team', teamRoutes);
 
 // 404 Handler
 app.use((req, res) => {

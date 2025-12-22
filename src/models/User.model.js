@@ -107,6 +107,13 @@ const UserSchema = new mongoose.Schema({
         }
     },
 
+    // Team Management (Hybrid Model)
+    primaryManager: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+
     // Profil CLIENT
     clientProfile: {
         company: String,
