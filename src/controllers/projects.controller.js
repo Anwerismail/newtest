@@ -139,12 +139,20 @@ export const getMyProjects = async (req, res) => {
         const { status, search, sortBy = 'createdAt', order = 'desc', page = 1, limit = 10 } = req.query;
 
         // Admins et Super Admins voient tous les projets
-        // Les autres utilisateurs voient seulement leurs projets
+        // Les autres utilisateurs voient leurs projets (créés, managés, ou assignés)
         const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN';
         
         const filter = {};
         if (!isAdmin) {
-            filter.owner = req.user._id;
+            // Include projects where user is:
+            // - Owner (created the project)
+            // - Project Manager (assigned to manage)
+            // - Worker (assigned to work on)
+            filter.$or = [
+                { owner: req.user._id },
+                { projectManager: req.user._id },
+                { assignedWorker: req.user._id }
+            ];
         }
 
         // Filtres

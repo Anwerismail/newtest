@@ -63,11 +63,11 @@ export const config = {
     RATE_LIMIT: {
         WINDOW_MS: 15 * 60 * 1000, // 15 minutes
         MAX_REQUESTS: {
-            SUPER_ADMIN: process.env.NODE_ENV === 'production' ? 1000 : 10000,
-            ADMIN: process.env.NODE_ENV === 'production' ? 500 : 10000,
-            PROJECT_MANAGER: process.env.NODE_ENV === 'production' ? 300 : 10000,
-            WORKER: process.env.NODE_ENV === 'production' ? 200 : 10000,
-            CLIENT: process.env.NODE_ENV === 'production' ? 100 : 10000
+            SUPER_ADMIN: process.env.NODE_ENV === 'production' ? 2000 : 10000,
+            ADMIN: process.env.NODE_ENV === 'production' ? 1000 : 10000,
+            PROJECT_MANAGER: process.env.NODE_ENV === 'production' ? 600 : 10000,
+            WORKER: process.env.NODE_ENV === 'production' ? 500 : 10000, // Augmenté de 200 à 500
+            CLIENT: process.env.NODE_ENV === 'production' ? 200 : 10000
         }
     }
 };
